@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: acaiteria-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: acaiteria
+      POSTGRES_USER: acaiteria
+      POSTGRES_PASSWORD: acaiteria
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U acaiteria"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: acaiteria-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5433
+      DB_NAME: acaiteria
+      DB_USER: acaiteria
+      DB_PASS: acaiteria
+      JWT_SECRET: troque-esta-chave-por-uma-segura-em-producao!!
+      JWT_EXPIRATION_MS: 86400000
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres_data:
